@@ -136,7 +136,7 @@ static double read_number()
     {
         _string = GROW_ARRAY(char, _string, (++length) + 1);
 
-        if (!isdigit(c) && c != '.')
+        if (!isdigit(c) && c != '.' && c != '-')
         {
             if (c == '\n') break;
             return 0;
