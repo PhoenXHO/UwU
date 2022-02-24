@@ -159,6 +159,14 @@ To print multiple expressions:
 ```
 ouo expression1, expression2, ... >>
 ```
+To print a new line:
+```
+ouo ~n >>
+```
+To print a tab:
+```
+ouo ~t >>
+```
 
 
 ## Reading input
@@ -186,6 +194,55 @@ iwi-s string_var << {: Reads a string from input to 'string_var' :}
 - Using non-boolean expressions as if-statement or loop condition.
 
 
+
+# UwU Program Examples
+**UwU** "Hello World!" program:
+```
+ouo "Hewwo Wowwd!" >>
+```
+
+**UwU** program to check if the entered number is positive or negative:
+```
+uwu number
+
+ouo "Enter a number: " >>
+iwi-d number <<
+
+?w? number <= 0 [:
+	?w? number = 0 [:
+		ouo ~n + "You entered a null number." >>
+	:] ewe [:
+		ouo ~n + "You entered a negative number." >>
+	:]
+:] ewe [:
+	ouo ~n, "You entered a positive number." >>
+:]
+```
+
+**UwU** program to print Fibonacci Sequence:
+```
+uwu t1 := 0
+uwu t2 := 1
+uwu nextTerm := t1 + t2
+
+uwu n
+
+ouo "Enter the number of terms: " >>
+iwi-d n <<
+
+ouo "Fibonacci Series: " + ~n >>
+ouo t1, ", " >>
+ouo t2, ", " >>
+
+uwu i := 3
+uwntiw i > n [:
+	ouo nextTerm, ", " >>
+	t1 := t2
+	t2 := nextTerm
+	nextTerm := t1 + t2
+	i := i + 1
+:]
+```
 
 
 
