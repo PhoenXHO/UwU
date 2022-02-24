@@ -1,0 +1,12 @@
+# Compiled sources #
+*.exe
+*.o
+*.out
+build/
+
+# IDE files #
+UwU_src/UwU.*
+bin/
+obj/
+
+*.uwu
