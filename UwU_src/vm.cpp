@@ -311,23 +311,6 @@ static InterpretResult run()
 
             case OP_PRINT:
             {
-//                uint16_t n = READ_SHORT();
-//                int i = 0;
-//                while (i < n / 2)
-//                {
-//                    Value tmp = vm._stack[i];
-//                    vm._stack[i] = vm._stack[n - i - 1];
-//                    vm._stack[n - i - 1] = tmp;
-//                    i++;
-//                }
-//                i = 0;
-//                while (i < n)
-//                {
-//                    print_value(pop());
-//                    i++;
-//                }
-//                break;
-
                 print_value(pop());
                 break;
             }
