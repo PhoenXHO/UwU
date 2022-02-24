@@ -96,7 +96,7 @@ static char * read_file(const char * path)
 
 static void read_flags(int argc, const char ** argv)
 {
-    for (int i = 3; i < argc; i++)
+    for (int i = 2; i < argc; i++)
     {
         if (argv[i][0] == '-' && strlen(argv[i]) == 2)
         {
@@ -130,7 +130,7 @@ static void run(int argc, const char ** argv)
         repl();
         return;
     }
-    else if (argc == 2 || argc > 5)
+    else if (argc > 4)
     {
         fprintf(stderr, "usage: uwu <path> [-p | -e]\n");
         exit(64);
@@ -138,9 +138,9 @@ static void run(int argc, const char ** argv)
 
     read_flags(argc, argv);
 
-    if (memcmp(argv[1], COMMAND, COMMAND_LENGTH) == 0)
+    if (memcmp(argv[0], COMMAND, COMMAND_LENGTH) == 0)
     {
-        char * source = read_file(argv[2]);
+        char * source = read_file(argv[1]);
         InterpretResult result = interpret(source);
         free(source);
 
@@ -149,7 +149,7 @@ static void run(int argc, const char ** argv)
     }
     else
     {
-        fprintf(stderr, "error: unrecognized command '%s'\n", argv[1]);
+        fprintf(stderr, "error: unrecognized command '%s'\n", argv[0]);
         exit(65);
     }
 }

@@ -18,7 +18,19 @@ static int constant_instruction(const char * name, Chunk * chunk, int offset)
     uint8_t constant = chunk->ccode()[offset + 1];
     printf("%-16s %4d '", name, constant);
     Value value = chunk->cconstants().vvalues()[constant];
-    print_value(value);
+    if (IS_CHAR(value))
+    {
+        switch (value.as.character)
+        {
+            case '\n': printf("~n");     break;
+            case '\t': printf("~t");     break;
+            default: print_value(value); break;
+        }
+    }
+    else
+    {
+        print_value(value);
+    }
     printf("'\n");
 
     return offset + 2;

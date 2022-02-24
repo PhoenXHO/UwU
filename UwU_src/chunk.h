@@ -39,6 +39,7 @@ typedef enum
     OP_READ_STRING,
     OP_READ_NUMBER,
     OP_READ_CHAR,
+    OP_READ_BOOL,
     OP_NEW_LINE,
 
     OP_JUMP,
