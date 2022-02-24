@@ -671,21 +671,6 @@ static void loop_statement()
 
 static void print_statement()
 {
-//    expression();
-//
-//    if (match(Kind::T_COMMA))
-//    {
-//        print_statement(n + 1);
-//        return;
-//    }
-//
-//    consume(Kind::T_PRINT_END, "'>>' expected after expression.");
-//
-//    if (n > UINT16_MAX) error("Too many expressions to print.");
-//    emit_byte(OP_PRINT);
-//    emit_byte((n >> 8) & 0xff);
-//    emit_byte(n & 0xff);
-
     expression();
     emit_byte(OP_PRINT);
 
