@@ -105,7 +105,7 @@ Example:
 - Concatenation `+` (can be used with both characters and strings)
 - Not `!`
 - Negation `-`
-- Comparison `=`, `!=`, `<`, `<=`, `>`, `>=` (Strings can be compared too using the operators `=` and `!=`)
+- Comparison `=`, `!=`, `<`, `<=`, `>`, `>=` (Strings and Chars can be compared using the operators `=` and `!=` too)
 - Logical Operators `awnd`, `ow`
 
 
