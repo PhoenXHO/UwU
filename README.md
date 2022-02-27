@@ -268,7 +268,7 @@ untiw i > n [:
 **UwU** program to calculate the power of a number:
 ```
 fwun power(b, e) [:
-	uwu r := 1
+    uwu r := 1
 	untiw e = 0 [:
 		r := r * b
 		e := e - 1
