@@ -6,7 +6,8 @@
 #include "chunk.h"
 #include "object.h"
 
-#define STACK_MAX 256
+#define FRAMES_MAX 64
+#define STACK_MAX (FRAMES_MAX * UINT8_COUNT)
 
 typedef enum
 {
@@ -17,10 +18,20 @@ typedef enum
 
 typedef struct
 {
+    Function * _function;
+    uint8_t * ip;
+    Value * slots;
+} CallFrame;
+
+typedef struct
+{
     Chunk * chunk;
     uint8_t * ip;
     Value _stack[STACK_MAX];
     Value * stack_top;
+
+    CallFrame frames[FRAMES_MAX];
+    int frame_count;
 
     std::unordered_map<String *, Value> strings;
     std::unordered_map<String *, Value> globals;
@@ -29,6 +40,8 @@ typedef struct
 
 void initVM();
 void freeVM();
+
+void reset_frame();
 
 InterpretResult interpret(const char *);
 

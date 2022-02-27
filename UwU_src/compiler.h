@@ -4,6 +4,6 @@
 #include "object.h"
 #include "vm.h"
 
-bool compile(Chunk *, const char *);
+Function * compile(const char *);
 
 #endif // COMPILER_H_INCLUDED

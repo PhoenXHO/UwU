@@ -24,6 +24,7 @@ typedef enum
     P_TERM,       // + -
     P_FACTOR,     // * /
     P_UNARY,      // ! -
+    P_CALL,       // ()
     P_PRIMARY,
 } Precedence;
 
@@ -42,33 +43,38 @@ typedef struct
     int depth;
 } Local;
 
+typedef enum
+{
+    TYPE_SCRIPT,
+    TYPE_FUNCTION,
+} FunType;
+
 class Compiler
 {
     private:
+        Compiler * _enclosing;
         int _local_count;
         int _scope_depth;
         Local _locals[UINT8_COUNT];
+        Function * _function;
+        FunType _type;
 
     public:
-        int local_count() { return _local_count; }
-        void local_count(int value) { _local_count = value; }
-        int local_count_inc() { return _local_count++; }
-        int local_count_dec() { return _local_count--; }
-        int scope_depth() { return _scope_depth; }
-        int scope_depth_inc() { return _scope_depth++; }
-        int scope_depth_dec() { return _scope_depth--; }
-        void scope_depth(int value) { _scope_depth = value; }
-        Local * locals()  { return _locals; }
+        Compiler * & enlosing()   { return _enclosing;   }
+
+        int & local_count()       { return _local_count; }
+        int & scope_depth()       { return _scope_depth; }
+        Local * locals()          { return _locals;      }
+        Function * & __function() { return _function;    }
+        FunType & ftype()         { return _type;        }
 };
 
 Parser parser;
 Compiler * current = NULL;
 
-Chunk * compiling_chunk;
-
 static Chunk * current_chunk()
 {
-    return compiling_chunk;
+    return &current->__function()->chunk();
 }
 
 static void error_at(Token * token, const char * message)
@@ -177,7 +183,48 @@ static int emit_jump(uint8_t instruction)
 
 static void emit_return()
 {
-    emit_byte(OP_RETURN);
+    emit_byte(OP_NULL);
+    emit_byte(OP_OUT);
+}
+
+static void init_compiler(Compiler * compiler, FunType type)
+{
+    compiler->enlosing() = current;
+
+    compiler->__function() = NULL;
+    compiler->ftype() = type;
+    compiler->local_count() = 0;
+    compiler->scope_depth() = 0;
+    compiler->__function() = new_function();
+
+    current = compiler;
+
+    if (type != TYPE_SCRIPT)
+    {
+        current->__function()->name() = copy_string(parser.previous.start(), parser.previous.length());
+    }
+
+    Local * local = &current->locals()[current->local_count()++];
+    local->depth = 0;
+    local->name.start() = "";
+    local->name.length() = 0;
+}
+
+static Function * end_compiler()
+{
+    emit_return();
+    Function * _function = current->__function();
+
+    if (DEBUG_PRINT_CODE)
+    {
+        if (!parser.had_error)
+        {
+            current_chunk()->disassemble(_function->name() != NULL ? _function->name()->chars() : "<script>");
+        }
+    }
+
+    current = current->enlosing();
+    return _function;
 }
 
 static uint8_t make_constant(Value value)
@@ -210,39 +257,19 @@ static void patch_jump(int offset)
     current_chunk()->ccode()[offset + 1] = jump & 0xff;
 }
 
-static void init_compiler(Compiler * compiler)
-{
-    compiler->local_count(0);
-    compiler->scope_depth(0);
-    current = compiler;
-}
-
-static void end_compiler()
-{
-    emit_return();
-
-    if (DEBUG_PRINT_CODE)
-    {
-        if (!parser.had_error)
-        {
-            current_chunk()->disassemble("code");
-        }
-    }
-}
-
 static void begin_scope()
 {
-    current->scope_depth_inc();
+    current->scope_depth()++;
 }
 
 static void end_scope()
 {
-    current->scope_depth_dec();
+    current->scope_depth()--;
 
     while (current->local_count() > 0 && current->locals()[current->local_count() - 1].depth > current->scope_depth())
     {
         emit_byte(OP_POP);
-        current->local_count_dec();
+        current->local_count()--;
     }
 }
 
@@ -393,7 +420,7 @@ static void add_local(Token name)
         return;
     }
 
-    Local * local = &current->locals()[current->local_count_inc()];
+    Local * local = &current->locals()[current->local_count()++];
     local->name = name;
     local->depth = -1;
 }
@@ -468,63 +495,95 @@ static void _unary(bool)
     }
 }
 
+static uint8_t arg_list()
+{
+    uint8_t arg_count = 0;
+    if (!check(Kind::T_RIGHT_PAR))
+    {
+        do
+        {
+            expression();
+
+            if (arg_count == 255)
+            {
+                error("can't have mowe than 255 awguments.");
+            }
+
+            arg_count++;
+        } while (match(Kind::T_COMMA));
+    }
+
+    consume(Kind::T_RIGHT_PAR, "')' expected aftew fwunction awguments.");
+    return arg_count;
+}
+
+static void _call(bool)
+{
+    uint8_t arg_count = arg_list();
+    emit_bytes(OP_CALL, arg_count);
+}
+
 ParseRule rules[] =
 {
-    /*[Kind::T_PLUS]          =*/ {NULL,   _binary, P_TERM},
-    /*[Kind::T_MINUS]         =*/ {_unary, _binary, P_TERM},
-    /*[Kind::T_STAR]          =*/ {NULL,   _binary, P_FACTOR},
-    /*[Kind::T_SLASH]         =*/ {NULL,   _binary, P_FACTOR},
+    /*[Kind::T_PLUS]          =*/ {NULL,    _binary, P_TERM},
+    /*[Kind::T_MINUS]         =*/ {_unary,  _binary, P_TERM},
+    /*[Kind::T_STAR]          =*/ {NULL,    _binary, P_FACTOR},
+    /*[Kind::T_SLASH]         =*/ {NULL,    _binary, P_FACTOR},
 
-    /*[Kind::T_NOT]           =*/ {_unary,    NULL, P_NONE},
+    /*[Kind::T_NOT]           =*/ {_unary,     NULL, P_NONE},
 
-    /*[Kind::T_LEFT_PAR]      =*/ {_grouping, NULL, P_NONE},
-    /*[Kind::T_RIGHT_PAR]     =*/ {NULL,      NULL, P_NONE},
+    /*[Kind::T_LEFT_PAR]      =*/ {_grouping, _call, P_CALL},
+    /*[Kind::T_RIGHT_PAR]     =*/ {NULL,       NULL, P_NONE},
 
-    /*[Kind::T_COMMA]         =*/ {NULL,      NULL, P_NONE},
-    /*[Kind::T_NEW_LINE]      =*/ {_newline,  NULL, P_NONE},
-    /*[Kind::T_TAB]           =*/ {_tab,      NULL, P_NONE},
+    /*[Kind::T_COMMA]         =*/ {NULL,       NULL, P_NONE},
+    /*[Kind::T_NEW_LINE]      =*/ {_newline,   NULL, P_NONE},
+    /*[Kind::T_TAB]           =*/ {_tab,       NULL, P_NONE},
 
-    /*[Kind::T_ASSIGN]        =*/ {NULL,      NULL, P_NONE},
-    /*[Kind::T_EQUAL]         =*/ {NULL,   _binary, P_EQUALITY},
-    /*[Kind::T_NOT_EQUAL]     =*/ {NULL,   _binary, P_EQUALITY},
+    /*[Kind::T_ASSIGN]        =*/ {NULL,       NULL, P_NONE},
+    /*[Kind::T_EQUAL]         =*/ {NULL,    _binary, P_EQUALITY},
+    /*[Kind::T_NOT_EQUAL]     =*/ {NULL,    _binary, P_EQUALITY},
 
-    /*[Kind::T_GREATER]       =*/ {NULL,   _binary, P_COMPARISON},
-    /*[Kind::T_GREATER_EQUAL] =*/ {NULL,   _binary, P_COMPARISON},
-    /*[Kind::T_LESS]          =*/ {NULL,   _binary, P_COMPARISON},
-    /*[Kind::T_LESS_EQUAL]    =*/ {NULL,   _binary, P_COMPARISON},
+    /*[Kind::T_GREATER]       =*/ {NULL,    _binary, P_COMPARISON},
+    /*[Kind::T_GREATER_EQUAL] =*/ {NULL,    _binary, P_COMPARISON},
+    /*[Kind::T_LESS]          =*/ {NULL,    _binary, P_COMPARISON},
+    /*[Kind::T_LESS_EQUAL]    =*/ {NULL,    _binary, P_COMPARISON},
 
-    /*[Kind::T_LEFT_SQB]      =*/ {NULL,      NULL, P_NONE},
-    /*[Kind::T_RIGHT_SQB]     =*/ {NULL,      NULL, P_NONE},
+    /*[Kind::T_LEFT_SQB]      =*/ {NULL,       NULL, P_NONE},
+    /*[Kind::T_RIGHT_SQB]     =*/ {NULL,       NULL, P_NONE},
+    /*[Kind::T_BLOCK_START]   =*/ {NULL,       NULL, P_NONE},
+    /*[Kind::T_BLOCK_END]     =*/ {NULL,       NULL, P_NONE},
 
-    /*[Kind::T_IDENTIFIER]    =*/ {_variable, NULL, P_NONE},
-    /*[Kind::T_STRING]        =*/ {_string,   NULL, P_NONE},
-    /*[Kind::T_NUMBER]        =*/ {_number,   NULL, P_NONE},
-    /*[Kind::T_CHAR]          =*/ {_char,     NULL, P_NONE},
+    /*[Kind::T_IDENTIFIER]    =*/ {_variable,  NULL, P_NONE},
+    /*[Kind::T_STRING]        =*/ {_string,    NULL, P_NONE},
+    /*[Kind::T_NUMBER]        =*/ {_number,    NULL, P_NONE},
+    /*[Kind::T_CHAR]          =*/ {_char,      NULL, P_NONE},
 
-    /*[Kind::T_AND]           =*/ {NULL,      _and, P_AND},
-    /*[Kind::T_OR]            =*/ {NULL,       _or, P_OR},
+    /*[Kind::T_AND]           =*/ {NULL,       _and, P_AND},
+    /*[Kind::T_OR]            =*/ {NULL,        _or, P_OR},
 
-    /*[Kind::T_VAR]           =*/ {NULL,      NULL, P_NONE},
+    /*[Kind::T_VAR]           =*/ {NULL,       NULL, P_NONE},
+    /*[Kind::T_FUN]           =*/ {NULL,       NULL, P_NONE},
 
-    /*[Kind::T_PRINT]         =*/ {NULL,      NULL, P_NONE},
-    /*[Kind::T_PRINT_END]     =*/ {NULL,      NULL, P_NONE},
+    /*[Kind::T_PRINT]         =*/ {NULL,       NULL, P_NONE},
+    /*[Kind::T_READ]          =*/ {NULL,       NULL, P_NONE},
+    /*[Kind::T_READ_END]      =*/ {NULL,       NULL, P_NONE},
 
-    /*[Kind::T_READ]          =*/ {NULL,      NULL, P_NONE},
-    /*[Kind::T_READ_END]      =*/ {NULL,      NULL, P_NONE},
+    /*[Kind::T_READ_STRING]   =*/ {NULL,       NULL, P_NONE},
+    /*[Kind::T_READ_NUMBER]   =*/ {NULL,       NULL, P_NONE},
+    /*[Kind::T_READ_CHAR]     =*/ {NULL,       NULL, P_NONE},
 
-    /*[Kind::T_READ_STRING]   =*/ {NULL,      NULL, P_NONE},
-    /*[Kind::T_READ_NUMBER]   =*/ {NULL,      NULL, P_NONE},
-    /*[Kind::T_READ_CHAR]     =*/ {NULL,      NULL, P_NONE},
+    /*[Kind::T_IF]            =*/ {NULL,       NULL, P_NONE},
+    /*[Kind::T_ELSE]          =*/ {NULL,       NULL, P_NONE},
+    /*[Kind::T_LOOP]          =*/ {NULL,       NULL, P_NONE},
 
-    /*[Kind::T_IF]            =*/ {NULL,      NULL, P_NONE},
-    /*[Kind::T_ELSE]          =*/ {NULL,      NULL, P_NONE},
-    /*[Kind::T_LOOP]          =*/ {NULL,      NULL, P_NONE},
+    /*[Kind::T_TRUE]          =*/ {_literal,   NULL, P_NONE},
+    /*[Kind::T_FALSE]         =*/ {_literal,   NULL, P_NONE},
 
-    /*[Kind::T_TRUE]          =*/ {_literal,  NULL, P_NONE},
-    /*[Kind::T_FALSE]         =*/ {_literal,  NULL, P_NONE},
+    /*[Kind::T_OUT]           =*/ {NULL,       NULL, P_NONE},
+    /*[Kind::T_OUT_END]       =*/ {NULL,       NULL, P_NONE},
 
-    /*[Kind::T_ERROR]         =*/ {NULL,      NULL, P_NONE},
-    /*[Kind::T_EOF]           =*/ {NULL,      NULL, P_NONE},
+    /*[Kind::T_ERROR]         =*/ {NULL,       NULL, P_NONE},
+    /*[Kind::T_EOF]           =*/ {NULL,       NULL, P_NONE},
 };
 
 static void parse_precedence(Precedence precedence)
@@ -565,6 +624,7 @@ static uint8_t parse_variable(const char * error_message)
 
 static void mark_initialized()
 {
+    if (current->scope_depth() == 0) return;
     current->locals()[current->local_count() - 1].depth = current->scope_depth();
 }
 
@@ -591,12 +651,50 @@ static void expression()
 
 static void block()
 {
-    while (!check(Kind::T_RIGHT_SQB) && !check(Kind::T_EOF))
+    while (!check(Kind::T_BLOCK_END) && !check(Kind::T_EOF))
     {
         declaration();
     }
 
-    consume(Kind::T_RIGHT_SQB, "':]' expected aftew bwock.");
+    consume(Kind::T_BLOCK_END, "':]' expected aftew bwock.");
+}
+
+static void _function(FunType type)
+{
+    Compiler compiler;
+    init_compiler(&compiler, type);
+    begin_scope();
+
+    consume(Kind::T_LEFT_PAR, "'(' expected aftew fwunction name.");
+    if (!check(Kind::T_RIGHT_PAR))
+    {
+        do
+        {
+            current->__function()->arity()++;
+            if (current->__function()->arity() > 255)
+            {
+                error_at_current("can't have mowe than 255 pawametews.");
+            }
+
+            uint8_t param_constant = parse_variable("pawamtew name expected.");
+            define_variable(param_constant);
+        } while (match(Kind::T_COMMA));
+    }
+    consume(Kind::T_RIGHT_PAR, "')' expected aftew fwunction pawametews.");
+
+    consume(Kind::T_BLOCK_START, "'[:' expected befowe fwunction body.");
+    block();
+
+    Function * _function = end_compiler();
+    emit_bytes(OP_CONSTANT, make_constant(OBJECT_VAL(_function)));
+}
+
+static void function_declaration()
+{
+    uint8_t global = parse_variable("fwunction name e-expected.");
+    mark_initialized();
+    _function(TYPE_FUNCTION);
+    define_variable(global);
 }
 
 static void variable_declaration()
@@ -628,7 +726,7 @@ static void if_statement()
     int then_jump = emit_jump(OP_JUMP_IF_FALSE);
     emit_byte(OP_POP);
 
-    consume(Kind::T_LEFT_SQB, "'[:' expected aftew condition.");
+    consume(Kind::T_BLOCK_START, "'[:' expected aftew condition.");
     begin_scope();
     block();
     end_scope();
@@ -640,7 +738,7 @@ static void if_statement()
 
     if (match(Kind::T_ELSE))
     {
-        consume(Kind::T_LEFT_SQB, "'[:' expected aftew condition.");
+        consume(Kind::T_BLOCK_START, "'[:' expected aftew condition.");
         begin_scope();
         block();
         end_scope();
@@ -658,7 +756,7 @@ static void loop_statement()
     int exit_jump = emit_jump(OP_JUMP_IF_TRUE);
     emit_byte(OP_POP);
 
-    consume(Kind::T_LEFT_SQB, "'[:' expected aftew condition.");
+    consume(Kind::T_BLOCK_START, "'[:' expected aftew condition.");
     begin_scope();
     block();
     end_scope();
@@ -667,6 +765,25 @@ static void loop_statement()
 
     patch_jump(exit_jump);
     emit_byte(OP_POP);
+}
+
+static void out_statement()
+{
+    if (current->ftype() == TYPE_SCRIPT)
+    {
+        error("iwwgaw out statement.");
+    }
+
+    if (check(Kind::T_OUT_END))
+    {
+        emit_return();
+    }
+    else
+    {
+        expression();
+        consume(Kind::T_OUT_END, "'>>' expected aftew out.");
+        emit_byte(OP_OUT);
+    }
 }
 
 static void print_statement()
@@ -680,7 +797,7 @@ static void print_statement()
         return;
     }
 
-    consume(Kind::T_PRINT_END, "'>>' expected aftew expwession.");
+    consume(Kind::T_OUT_END, "'>>' expected aftew expwession.");
 }
 
 static void read_statement()
@@ -721,7 +838,11 @@ static void synchronize()
 
 static void declaration()
 {
-    if (match(Kind::T_VAR))
+    if (match(Kind::T_FUN))
+    {
+        function_declaration();
+    }
+    else if (match(Kind::T_VAR))
     {
         variable_declaration();
     }
@@ -751,6 +872,10 @@ static void statement()
     {
         loop_statement();
     }
+    else if (match(Kind::T_OUT))
+    {
+        out_statement();
+    }
     else if (match(Kind::T_LEFT_SQB))
     {
         begin_scope();
@@ -763,12 +888,11 @@ static void statement()
     }
 }
 
-bool compile(Chunk * chunk, const char * source)
+Function * compile(const char * source)
 {
     init_scanner(source);
     Compiler compiler;
-    init_compiler(&compiler);
-    compiling_chunk = chunk;
+    init_compiler(&compiler, TYPE_SCRIPT);
 
     parser.had_error = false;
     parser.panic_mode = false;
@@ -780,7 +904,6 @@ bool compile(Chunk * chunk, const char * source)
         declaration();
     }
 
-    end_compiler();
-
-    return !parser.had_error;
+    Function * _function = end_compiler();
+    return parser.had_error ? NULL : _function;
 }

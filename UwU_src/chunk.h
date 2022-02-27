@@ -48,7 +48,9 @@ typedef enum
 
     OP_NULL,
 
-    OP_RETURN,
+    OP_CALL,
+
+    OP_OUT,
 } OpCode;
 
 typedef struct

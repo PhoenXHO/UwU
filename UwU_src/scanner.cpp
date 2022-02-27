@@ -118,26 +118,43 @@ static Kind identifier_kind()
         case '?': return check_keyword(1, 2, "w?",    Kind::T_IF,    false);
         case 'e': return check_keyword(1, 2, "we",    Kind::T_ELSE,  true);
         case 't': return check_keyword(1, 3, "wue",   Kind::T_TRUE,  true);
-        case 'f': return check_keyword(1, 4, "awse",  Kind::T_FALSE, true);
+
+        case 'f':
+            if (scanner.start[1])
+            {
+                switch (scanner.start[1])
+                {
+                    case 'a': return check_keyword(2, 3, "wse",  Kind::T_FALSE, true);
+                    case 'w': return check_keyword(2, 2, "un",   Kind::T_FUN,   true);
+                }
+            }
 
         case 'u':
-            if (scanner.current - scanner.start > 2 && scanner.start[1])
+            if (scanner.start[1])
             {
-                switch (scanner.start[2])
+                switch (scanner.start[1])
                 {
-                    case 'u': return Kind::T_VAR;
-                    case 'n': return check_keyword(3, 3, "tiw", Kind::T_LOOP, true);
+                    case 'w': return check_keyword(2, 1, "u", Kind::T_VAR, true);
+                    case 'n': return check_keyword(2, 3, "tiw", Kind::T_LOOP, true);
                 }
             }
             break;
 
         case 'o':
-            if (scanner.current - scanner.start > 1)
+            if (scanner.start[1])
             {
                 switch (scanner.start[1])
                 {
                     case 'w': return Kind::T_OR;
-                    case 'u': return check_keyword(2, 1, "o", Kind::T_PRINT, true);
+                    case 'u':
+                        if (scanner.start[2])
+                        {
+                            switch (scanner.start[2])
+                            {
+                                case 'o': return Kind::T_PRINT;
+                                case 't': return Kind::T_OUT;
+                            }
+                        }
                 }
             }
             break;
@@ -257,14 +274,16 @@ Token scan_token()
         case '<':
             return make_token(match('=') ? Kind::T_LESS_EQUAL : (match('<') ? Kind::T_READ_END : Kind::T_LESS));
         case '>':
-            return make_token(match('=') ? Kind::T_GREATER_EQUAL : (match('>') ? Kind::T_PRINT_END : Kind::T_GREATER));
+            return make_token(match('=') ? Kind::T_GREATER_EQUAL : (match('>') ? Kind::T_OUT_END : Kind::T_GREATER));
 
         case '"': return _string();
         case '`': return _char();
 
         case '[':
-            if (match(':')) return make_token(Kind::T_LEFT_SQB);
+            return make_token(match(':') ? Kind::T_BLOCK_START : Kind::T_LEFT_SQB);
             break;
+        case ']':
+            return make_token(Kind::T_RIGHT_SQB);
 
         case ':':
         {
@@ -276,7 +295,7 @@ Token scan_token()
             else if (peek() == ']')
             {
                 advance();
-                return make_token(Kind::T_RIGHT_SQB);
+                return make_token(Kind::T_BLOCK_END);
             }
         }
     }

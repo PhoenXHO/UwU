@@ -37,6 +37,7 @@ static void repl()
         }
 
         printf("\n");
+        reset_frame();
     }
 }
 

@@ -138,8 +138,11 @@ int Chunk::disassemble_instruction(int offset)
         case OP_NULL:
             return simple_instruction("OP_NULL", offset);
 
-        case OP_RETURN:
-            return simple_instruction("OP_RETURN", offset);
+        case OP_CALL:
+            return byte_instruction("OP_CALL", this, offset);
+
+        case OP_OUT:
+            return simple_instruction("OP_OUT", offset);
 
         default:
             printf("Unknown opcode %d\n", instruction);

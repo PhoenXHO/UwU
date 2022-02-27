@@ -14,6 +14,7 @@ class Token {
             T_GREATER, T_GREATER_EQUAL,
             T_LESS, T_LESS_EQUAL,
             T_RIGHT_SQB, T_LEFT_SQB,
+            T_BLOCK_START, T_BLOCK_END,
 
             //Literals
             T_IDENTIFIER,
@@ -21,12 +22,13 @@ class Token {
 
             //Keywords
             T_AND, T_OR,
-            T_VAR,
-            T_PRINT, T_PRINT_END,
+            T_FUN, T_VAR,
+            T_PRINT,
             T_READ, T_READ_END,
             T_READ_STRING, T_READ_NUMBER, T_READ_CHAR,
             T_IF, T_ELSE, T_LOOP,
             T_TRUE, T_FALSE,
+            T_OUT, T_OUT_END,
 
             T_ERROR, T_EOF
         };
@@ -34,17 +36,16 @@ class Token {
         Token(Kind kind, const char * start, int length, int line) :
             _kind{kind}, _start(start), _length(length), _line(line) {}
 
-        const char * start() { return _start;  }
-        int length()         { return _length; }
-        int line()           { return _line;   }
-        Kind kind()          { return _kind;   }
+        const char * & start() { return _start;  }
+        int & length()         { return _length; }
+        int line()             { return _line;   }
+        Kind kind()            { return _kind;   }
 
     private:
         Kind _kind{};
         const char * _start;
         int _length;
         int _line;
-
 };
 
 typedef Token::Kind Kind;

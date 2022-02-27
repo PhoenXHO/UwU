@@ -7,12 +7,21 @@ extern VM vm;
 Object * allocate_object(size_t _size, ObjType type)
 {
     Object * object = (Object *)reallocate(NULL, _size);
-    object->type(type);
+    object->type() = type;
 
-    object->next(vm.objects);
+    object->next() = vm.objects;
     vm.objects = object;
 
     return object;
+}
+
+Function * new_function()
+{
+    Function * _function = ALLOCATE_OBJECT(Function, O_FUNCTION);
+    _function->arity() = 0;
+    _function->name() = NULL;
+    _function->chunk().init();
+    return _function;
 }
 
 bool is_object_type(Value value, ObjType type)
@@ -23,8 +32,8 @@ bool is_object_type(Value value, ObjType type)
 String * allocate_string(char * chars, int length)
 {
     String * _string = ALLOCATE_OBJECT(String, O_STRING);
-    _string->length(length);
-    _string->chars(chars);
+    _string->length() = length;
+    _string->chars() = chars;
 
     vm.strings.insert(std::make_pair(_string, OBJECT_VAL(NULL)));
 
@@ -45,6 +54,15 @@ void Object::free()
             String * _string = (String *)this;
             _string->free();
             FREE(String, this);
+            break;
+        }
+
+        case O_FUNCTION:
+        {
+            Function * _function = (Function *)this;
+            _function->chunk().free();
+            FREE(Function, this);
+            break;
         }
     }
 }
@@ -92,12 +110,26 @@ String * copy_string(const char * chars, int length)
     return allocate_string(heap, length);
 }
 
+void print_function(Function * _function)
+{
+    if (_function->name() == NULL)
+    {
+        printf("<script>");
+        return;
+    }
+    printf("<fn %s>", _function->name()->chars());
+}
+
 void print_object(Value value)
 {
     switch (OBJECT_TYPE(value))
     {
         case O_STRING:
             printf("%s", AS_CSTRING(value));
+            break;
+
+        case O_FUNCTION:
+            print_function(AS_FUNCTION(value));
             break;
     }
 }
