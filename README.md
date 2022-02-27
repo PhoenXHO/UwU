@@ -119,18 +119,18 @@ The syntax for an if-statement in **UwU** is:
 ```
 ?w? condition
 [:
-    {: code :}
+	{: code :}
 :]
 ```
 **UwU** also supports `if..else` statements:
 ```
 ?w? condition
 [:
-    {: executes if 'condition' is true :}
+	{: executes if 'condition' is true :}
 :]
 ewe
 [:
-    {: executes otherwise :}
+	{: executes otherwise :}
 :]
 ```
 Note that any non-zero value corresponds to `twue` while `0` corresponds to `fawse`.
@@ -142,7 +142,7 @@ The syntax for `untiw` loops is:
 ```
 untiw condition
 [:
-    {: executes until 'contidion' is true :}
+	{: executes until 'contidion' is true :}
 :]
 ```
 
@@ -207,9 +207,9 @@ fwun function_name(parameter1, parameter2, ...) [:
 
 # Supported operations
 - Using binary operator ```+``` on strings/characters:  
-    `` "string" + `a` `` evaluates to `"stringa"`  
-    `` `a` + "string" `` evaluates to `"astring"`  
-    `` `a` + `b` ``      evaluates to `"ab"`  
+	`` "string" + `a` `` evaluates to `"stringa"`  
+	`` `a` + "string" `` evaluates to `"astring"`  
+	`` `a` + `b` ``      evaluates to `"ab"`  
 - Using equality operators on non-numbers always evaluates to `fawse`.
 - Assigning a value of a specific type to a variable of a different data type, that includes reading from input.
 - Using non-boolean expressions as if-statement or loop condition.
