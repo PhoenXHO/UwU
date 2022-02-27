@@ -183,7 +183,7 @@ iwi-s string_var << {: Reads a string from input to 'string_var' :}
 
 
 ## Functions
-**UwU** supports both recursive and non-recursive functions.
+**UwU** supports both recursive and non-recursive functions.  
 To define a function:
 ```
 fwun function_name(parameter1, parameter2, ...) [:
