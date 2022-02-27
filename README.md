@@ -140,9 +140,9 @@ Note that any non-zero value corresponds to `twue` while `0` corresponds to `faw
 
 ## Loops
 Loops in **UwU** are different than `while` loops in C/C++ in that the code within the following block executes until a certain condition is met.  
-The syntax for `uwntiw` loops is:
+The syntax for `untiw` loops is:
 ```
-uwntiw condition
+untiw condition
 [:
     {: executes until 'contidion' is true :}
 :]
@@ -235,7 +235,7 @@ ouo t1, ", " >>
 ouo t2, ", " >>
 
 uwu i := 3
-uwntiw i > n [:
+untiw i > n [:
 	ouo nextTerm, ", " >>
 	t1 := t2
 	t2 := nextTerm
