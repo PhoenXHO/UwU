@@ -11,15 +11,18 @@
 
 #define IS_STRING(value)    (is_object_type(value, O_STRING))
 #define IS_FUNCTION(value)  (is_object_type(value, O_FUNCTION))
+#define IS_NATIVE(value)    (is_object_type(value, O_NATIVE))
 
 #define AS_STRING(value)    ((String *)AS_OBJECT(value))
 #define AS_CSTRING(value)   (((String *)AS_OBJECT(value))->chars())
 #define AS_FUNCTION(value)  ((Function *)AS_OBJECT(value))
+#define AS_NATIVE(value)    ((Native *)AS_OBJECT(value))
 
 typedef enum
 {
     O_STRING,
     O_FUNCTION,
+    O_NATIVE,
 } ObjType;
 
 class Object
@@ -48,6 +51,19 @@ class Function : public Object
         String * & name() { return _name;  }
 };
 
+typedef Value (* NativeFunction)(int, Value *);
+
+class Native : public Function
+{
+    private:
+        NativeFunction native_function;
+        int _arity;
+
+    public:
+        NativeFunction & _function() { return native_function; }
+        int & arity() { return _arity; }
+};
+
 class String : public Object
 {
     private:
@@ -61,10 +77,11 @@ class String : public Object
         void free();
 };
 
+Native * new_native(NativeFunction);
 Function * new_function();
-Object * allocate_object(size_t, ObjType);
 String * take_string(char *, int);
 String * copy_string(const char *, int);
+Object * allocate_object(size_t, ObjType);
 bool is_object_type(Value, ObjType);
 void print_object(Value);
 

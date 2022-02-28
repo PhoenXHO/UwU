@@ -15,6 +15,13 @@ Object * allocate_object(size_t _size, ObjType type)
     return object;
 }
 
+Native * new_native(NativeFunction _function)
+{
+    Native * native = ALLOCATE_OBJECT(Native, O_NATIVE);
+    native->_function() = _function;
+    return native;
+}
+
 Function * new_function()
 {
     Function * _function = ALLOCATE_OBJECT(Function, O_FUNCTION);
@@ -51,8 +58,6 @@ void Object::free()
     {
         case O_STRING:
         {
-            String * _string = (String *)this;
-            _string->free();
             FREE(String, this);
             break;
         }
@@ -62,6 +67,12 @@ void Object::free()
             Function * _function = (Function *)this;
             _function->chunk().free();
             FREE(Function, this);
+            break;
+        }
+
+        case O_NATIVE:
+        {
+            FREE(Native, this);
             break;
         }
     }
@@ -117,7 +128,7 @@ void print_function(Function * _function)
         printf("<script>");
         return;
     }
-    printf("<fn %s>", _function->name()->chars());
+    printf("<%s>", _function->name()->chars());
 }
 
 void print_object(Value value)
@@ -130,6 +141,10 @@ void print_object(Value value)
 
         case O_FUNCTION:
             print_function(AS_FUNCTION(value));
+            break;
+
+        case O_NATIVE:
+            printf("<native>");
             break;
     }
 }

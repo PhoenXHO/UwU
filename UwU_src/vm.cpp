@@ -8,6 +8,18 @@ extern int DEBUG_TRACE_EXECUTION;
 
 VM vm;
 
+void define_native(const char * name, NativeFunction _function, int arity)
+{
+    Native * native = new_native(_function);
+    native->arity() = arity;
+
+    push(OBJECT_VAL(copy_string(name, (int)strlen(name))));
+    push(OBJECT_VAL(native));
+    vm.globals.insert(std::make_pair(AS_STRING(vm._stack[0]), vm._stack[1]));
+    pop();
+    pop();
+}
+
 void reset_frame()
 {
     vm.frame_count = 0;
@@ -58,6 +70,11 @@ void initVM()
 {
     reset_stack();
     vm.objects = NULL;
+
+    define_native("abs", _builtin__abs_, 1);
+    define_native("powew", _builtin__pow_, 2);
+    define_native("sqwt", _builtin__sqrt_, 1);
+    define_native("floow", _builtin__floor_, 1);
 }
 
 void freeVM()
@@ -114,6 +131,21 @@ static bool call_value(Value callee, int arg_count)
         {
             case O_FUNCTION:
                 return call(AS_FUNCTION(callee), arg_count);
+
+            case O_NATIVE:
+            {
+                Native * native = AS_NATIVE(callee);
+                NativeFunction _function = native->_function();
+                if (arg_count != native->arity())
+                {
+                    runtime__error("expected %d awguments but got %d.", native->arity(), arg_count);
+                    return false;
+                }
+                Value result = _function(arg_count, vm.stack_top - arg_count);
+                vm.stack_top -= arg_count + 1;
+                push(result);
+                return true;
+            }
 
             default: break;
         }
@@ -322,6 +354,14 @@ static InterpretResult run()
                 Value b = pop();
                 Value a = pop();
                 push(BOOL_VAL(values_equal(a, b)));
+                break;
+            }
+
+            case OP_NOT_EQUAL:
+            {
+                Value b = pop();
+                Value a = pop();
+                push(BOOL_VAL(!values_equal(a, b)));
                 break;
             }
 

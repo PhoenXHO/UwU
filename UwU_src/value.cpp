@@ -50,7 +50,7 @@ void print_value(Value value)
             printf(AS_BOOL(value) ? "twue" : "fawse");
             break;
         case V_NUMBER:
-            printf("%g", AS_NUMBER(value));
+            printf("%.15g", AS_NUMBER(value));
             break;
         case V_CHAR:
             printf("%c", AS_CHAR(value));
