@@ -173,9 +173,9 @@ Reading input is different for each data type. The syntax is:
 iwi type variable_name <<
 ```
 `type` can be `-s`, `-d`, or `-c`.  
-`-s` if for strings.  
-`-d` is for numbers.  
-`-c` is for characters.  
+- `-s` if for strings;  
+- `-d` is for numbers;  
+- `-c` is for characters.  
 Example:
 ```
 iwi-s string_var << {: Reads a string from input to 'string_var' :}
@@ -205,13 +205,20 @@ fwun function_name(parameter1, parameter2, ...) [:
 ```
 
 
+## Built-in functions
+- `powew(base, exponent)`: equivalent to `pow(base, exponent)` in **C**;
+- `floow(x)`: equivalent to `floor(x)` in **C**;
+- `abs(x)`: returns the absolute value of `x`;
+- `sqwt(x)`: returns the square root of `x`.
+
+
 # Supported operations
 - Using binary operator ```+``` on strings/characters:  
 	`` "string" + `a` `` evaluates to `"stringa"`  
 	`` `a` + "string" `` evaluates to `"astring"`  
 	`` `a` + `b` ``      evaluates to `"ab"`  
-- Using equality operators on non-numbers always evaluates to `fawse`.
-- Assigning a value of a specific type to a variable of a different data type, that includes reading from input.
+- Using equality operators on non-numbers always evaluates to `fawse`;
+- Assigning a value of a specific type to a variable of a different data type, that includes reading from input;
 - Using non-boolean expressions as if-statement or loop condition.
 
 
