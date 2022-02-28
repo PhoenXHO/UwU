@@ -216,7 +216,7 @@ fwun function_name(parameter1, parameter2, ...) [:
 
 
 
-# UwU Program Examples
+# UwU program examples
 **UwU** "Hello World!" program:
 ```
 ouo "Hewwo Wowwd!" >>
