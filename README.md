@@ -34,9 +34,7 @@ to execute a `.uwu` file.
 
 # Language Features/Syntax
 ## Identifiers
-**UwU** doesn't support functions or classes (yet), so Identifiers are just equivalent to variable names.
-Identifiers can be alphanumerical (and can contain '\_') but they can only start with a letter or an underscore **'\_'**.
-It should be noted that **UwU** is case sensitive, meaning that 'Var' and 'var' are two different identifiers.
+**UwU** follows the same rules as **C** and **C++** in terms of naming identifiers.
 ## Variables
 Variable declaration syntax:
 ```
@@ -121,18 +119,18 @@ The syntax for an if-statement in **UwU** is:
 ```
 ?w? condition
 [:
-    {: code :}
+	{: code :}
 :]
 ```
 **UwU** also supports `if..else` statements:
 ```
 ?w? condition
 [:
-    {: executes if 'condition' is true :}
+	{: executes if 'condition' is true :}
 :]
 ewe
 [:
-    {: executes otherwise :}
+	{: executes otherwise :}
 :]
 ```
 Note that any non-zero value corresponds to `twue` while `0` corresponds to `fawse`.
@@ -144,7 +142,7 @@ The syntax for `untiw` loops is:
 ```
 untiw condition
 [:
-    {: executes until 'contidion' is true :}
+	{: executes until 'contidion' is true :}
 :]
 ```
 
@@ -184,18 +182,41 @@ iwi-s string_var << {: Reads a string from input to 'string_var' :}
 ```
 
 
+## Functions
+**UwU** supports both recursive and non-recursive functions.  
+To define a function:
+```
+fwun function_name(parameter1, parameter2, ...) [:
+	{: function body :}
+:]
+```
+Whereas function parameters are optional.
+And to call a function, simply
+```
+function_name(argument1, argument2, ...)
+```
+For functions that have return values:
+```
+fwun function_name(parameter1, parameter2, ...) [:
+	{: function body :}
+	
+	out return_value >>
+:]
+```
+
+
 # Supported operations
 - Using binary operator ```+``` on strings/characters:  
-    `` "string" + `a` `` evaluates to `"stringa"`  
-    `` `a` + "string" `` evaluates to `"astring"`  
-    `` `a` + `b` ``      evaluates to `"ab"`  
+	`` "string" + `a` `` evaluates to `"stringa"`  
+	`` `a` + "string" `` evaluates to `"astring"`  
+	`` `a` + `b` ``      evaluates to `"ab"`  
 - Using equality operators on non-numbers always evaluates to `fawse`.
 - Assigning a value of a specific type to a variable of a different data type, that includes reading from input.
 - Using non-boolean expressions as if-statement or loop condition.
 
 
 
-# UwU Program Examples
+# UwU program examples
 **UwU** "Hello World!" program:
 ```
 ouo "Hewwo Wowwd!" >>
@@ -244,6 +265,31 @@ untiw i > n [:
 :]
 ```
 
+**UwU** program to calculate the power of a number:
+```
+fwun power(b, e) [:
+	uwu r := 1
+	untiw e = 0 [:
+		r := r * b
+		e := e - 1
+	:]
+
+	out r >>
+:]
+
+uwu base
+uwu exp
+uwu result
+
+ouo "Enter a base number: " >>
+iwi-d base <<
+ouo "Enter an exponent: " >>
+iwi-d exp <<
+
+result := power(base, exp)
+
+ouo "Answer = ", result >>
+```
 
 
 
