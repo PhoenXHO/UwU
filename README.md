@@ -1,5 +1,5 @@
 # UwU
-UwU is an esoteric statically typed programming language that is very simple and easy to use.
+UwU is an esoteric dynamically-typed programming language that is very simple and easy to use.
 
 
 # Installation
