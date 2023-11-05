@@ -88,7 +88,7 @@ var := "string"  {: This operation is still valid but 'var' is no longer of type
 
 ## Comments
 **UwU** currently only supports multi-line comments.
-A comment in **UwU** starts with `{:` and ends with `:}` and anything inside will be entirely ingnored.
+A comment in **UwU** starts with `{:` and ends with `:}` and anything inside will be entirely ignored.
 Example:
 ```
 {: This is a comment and it will be ignored during compilation :}
