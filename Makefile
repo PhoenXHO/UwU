@@ -1,5 +1,5 @@
 CC          := g++
-CC_FLAGS    := -Wall -Wextra -pedantic -std=c++20
+CC_FLAGS    := -Wall -Wextra -pedantic
 
 BUILD_DIR   := build
 SOURCES      = $(wildcard UwU_src/*.cpp)

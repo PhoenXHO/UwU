@@ -7,9 +7,7 @@ extern int DEBUG_TRACE_EXECUTION;
 
 FILE * INPUT;
 
-static const char * COMMAND = "uwu";
 static const char * EXTENSION = ".uwu";
-static int COMMAND_LENGTH = 3;
 static int EXTENSION_LENGTH = 4;
 
 static void usage_error()
@@ -139,20 +137,12 @@ static void run(int argc, const char ** argv)
 
     read_flags(argc, argv);
 
-    if (memcmp(argv[0], COMMAND, COMMAND_LENGTH) == 0)
-    {
-        char * source = read_file(argv[1]);
-        InterpretResult result = interpret(source);
-        free(source);
+	char * source = read_file(argv[1]);
+	InterpretResult result = interpret(source);
+	free(source);
 
-        if (result == INTERPRET_COMPILE_ERROR) exit(70);
-        if (result == INTERPRET_RUNTIME_ERROR) exit(71);
-    }
-    else
-    {
-        fprintf(stderr, "error: unrecognized command '%s'\n", argv[0]);
-        exit(65);
-    }
+	if (result == INTERPRET_COMPILE_ERROR) exit(70);
+	if (result == INTERPRET_RUNTIME_ERROR) exit(71);
 }
 
 int main(int argc, const char ** argv)
